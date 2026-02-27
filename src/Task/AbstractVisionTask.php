@@ -96,7 +96,11 @@ abstract class AbstractVisionTask implements AiTaskInterface
             "@SurvosAiPipeline/prompt/{$taskSlug}/user.html.twig", $tplContext
         ));
 
-        $userMessage = $imageUrl !== null
+        // Don't attach image content for PDFs — send text-only using prior OCR results.
+        $attachImage = $imageUrl !== null
+            && !str_ends_with(strtolower(parse_url($imageUrl, PHP_URL_PATH) ?? $imageUrl), '.pdf');
+
+        $userMessage = $attachImage
             ? Message::ofUser($userPrompt, $this->fetchImage($imageUrl))
             : Message::ofUser($userPrompt);
 
