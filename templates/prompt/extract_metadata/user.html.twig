@@ -1,0 +1,6 @@
+Extract all metadata you can from this image.
+{% if ocr_text %}
+
+The OCR text reads:
+"{{ ocr_text|slice(0, 800) }}"
+{% endif %}

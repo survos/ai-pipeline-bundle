@@ -1,0 +1,6 @@
+Generate keywords and a safety rating for this image.
+{% if ocr_text %}
+
+OCR text snippet:
+"{{ ocr_text|slice(0, 300) }}"
+{% endif %}

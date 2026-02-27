@@ -1,0 +1,63 @@
+# config/packages/ai.yaml
+#
+# Agent definitions for survos/ai-pipeline-bundle built-in tasks.
+# Copy this file to your app's config/packages/ai.yaml and fill in your API keys.
+#
+# Each agent name corresponds to the service ID ai.agent.{name} used by task classes.
+# You can change models, platforms, or prompts without touching any PHP code.
+
+ai:
+    platform:
+        openai:
+            api_key: '%env(OPENAI_API_KEY)%'
+        mistral:
+            api_key: '%env(MISTRAL_API_KEY)%'
+
+    agent:
+        # ── OCR via gpt-4o vision ──────────────────────────────────────────────
+        # Used by: OcrTask
+        ocr:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o'
+            prompt:
+                text: 'You are an expert OCR and document transcription engine. Return structured JSON only.'
+            tools: false
+
+        # ── Mistral vision (OCR + handwriting) ────────────────────────────────
+        # Used by: TranscribeHandwritingTask
+        # OcrMistralTask calls the Mistral OCR API directly (not via this agent).
+        mistral_vision:
+            platform: 'ai.platform.mistral'
+            model: 'pixtral-large-latest'
+            prompt:
+                text: 'You are an expert at reading historical documents, handwriting, and complex page layouts. Return structured JSON only.'
+            tools: false
+
+        # ── Classification ─────────────────────────────────────────────────────
+        # Used by: ClassifyTask
+        classify:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt:
+                text: 'You are an expert document classifier. Return structured JSON only.'
+            tools: false
+
+        # ── Description ────────────────────────────────────────────────────────
+        # Used by: BasicDescriptionTask, ContextDescriptionTask, KeywordsTask
+        description:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt:
+                text: 'You are a museum archivist generating visual descriptions and keyword lists. Return structured JSON only.'
+            tools: false
+
+        # ── Metadata / NER / title / summarize ────────────────────────────────
+        # Used by: ExtractMetadataTask, GenerateTitleTask, PeopleAndPlacesTask,
+        #          SummarizeTask, TranslateTask
+        # Switch to gpt-4o for higher-precision collections.
+        metadata:
+            platform: 'ai.platform.openai'
+            model: 'gpt-4o-mini'
+            prompt:
+                text: 'You are a specialist archivist extracting structured metadata from historical documents and objects. Return structured JSON only.'
+            tools: false

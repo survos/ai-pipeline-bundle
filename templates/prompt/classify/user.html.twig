@@ -1,0 +1,6 @@
+What type of document or object is this? Provide the primary type, optional subtype, confidence (0.0–1.0), and a one-sentence rationale.
+{% if ocr_text %}
+
+The OCR extracted this text from the image:
+"{{ ocr_text|slice(0, 300) }}"
+{% endif %}
