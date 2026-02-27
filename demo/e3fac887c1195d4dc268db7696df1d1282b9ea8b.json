@@ -1,0 +1,97 @@
+{
+    "subject": "https://iiif.digitalcommonwealth.org/iiif/2/commonwealth:pz50hp570/full/,1200/0/default.jpg",
+    "results": {
+        "ocr_mistral": {
+            "text": "STARS &amp; STRIPES\nTHE\nBURBEE GUM\nSTARS &amp; STRIPES\nA COMPOSITIVE GUM #000115\n\n![img-0.jpeg](img-0.jpeg)\n\n![img-1.jpeg](img-1.jpeg)",
+            "language": null,
+            "confidence": "high",
+            "blocks": [
+                {
+                    "text": "STARS &amp; STRIPES\nTHE\nBURBEE GUM\nSTARS &amp; STRIPES\nA COMPOSITIVE GUM #000115\n\n![img-0.jpeg](img-0.jpeg)\n\n![img-1.jpeg](img-1.jpeg)",
+                    "type": "page",
+                    "index": 0
+                }
+            ],
+            "raw_response": {
+                "pages": [
+                    {
+                        "index": 0,
+                        "markdown": "STARS &amp; STRIPES\nTHE\nBURBEE GUM\nSTARS &amp; STRIPES\nA COMPOSITIVE GUM #000115\n\n![img-0.jpeg](img-0.jpeg)\n\n![img-1.jpeg](img-1.jpeg)",
+                        "images": [
+                            {
+                                "id": "img-0.jpeg",
+                                "top_left_x": 83,
+                                "top_left_y": 562,
+                                "bottom_right_x": 972,
+                                "bottom_right_y": 1036,
+                                "image_base64": null,
+                                "image_annotation": null
+                            },
+                            {
+                                "id": "img-1.jpeg",
+                                "top_left_x": 1028,
+                                "top_left_y": 222,
+                                "bottom_right_x": 1742,
+                                "bottom_right_y": 982,
+                                "image_base64": null,
+                                "image_annotation": null
+                            }
+                        ],
+                        "tables": [],
+                        "hyperlinks": [],
+                        "header": null,
+                        "footer": null,
+                        "dimensions": {
+                            "dpi": 200,
+                            "height": 1200,
+                            "width": 1888
+                        }
+                    }
+                ],
+                "model": "mistral-ocr-latest",
+                "document_annotation": null,
+                "usage_info": {
+                    "pages_processed": 1,
+                    "doc_size_bytes": 550950
+                }
+            }
+        },
+        "basic_description": {
+            "description": "The image features two different brands of bubble gum packaging. On the left, the 'Stars & Stripes' packaging is predominantly blue and orange, with red, white, and blue themes, featuring text that reads \"STARS & STRIPES\" and a price of \"10¢\". On the right, the 'Love Is' packaging has a black background with vibrant floral designs in pink and yellow, and it also displays the brand name and information in prominent typography. Multiple unwrapped or partially opened gum packages are scattered around, with a mix of colorful pieces visible on the surface, adding additional hues of blue, pink, and orange. The background is a solid yellow color, contributing to a bright and playful aesthetic. The condition of the packaging appears clean and well-preserved.",
+            "language": "en",
+            "physicalAttributes": [
+                "two different packaging designs for bubble gum",
+                "left packaging: blue and orange with red, white, and blue color scheme",
+                "right packaging: black with floral patterns in pink and yellow",
+                "text displays brand names prominently",
+                "gum pieces in various colors scattered on the surface",
+                "solid yellow background"
+            ],
+            "_tokens": {
+                "prompt": 37012,
+                "completion": 225,
+                "total": 37237,
+                "cached": 0
+            }
+        },
+        "keywords": {
+            "keywords": [
+                "bubble-gum",
+                "packaging",
+                "cardboard",
+                "colorful",
+                "1960s",
+                "bright",
+                "nostalgia",
+                "snack"
+            ],
+            "safety": "safe",
+            "_tokens": {
+                "prompt": 37100,
+                "completion": 35,
+                "total": 37135,
+                "cached": 0
+            }
+        }
+    }
+}

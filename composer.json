@@ -1,0 +1,20 @@
+{
+    "name": "survos/ai-pipeline-bundle",
+    "description": "Generic AI task pipeline bundle for Symfony — vision, text, audio, and beyond",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Survos\\AiPipelineBundle\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "symfony/framework-bundle": "^7.0|^8.0"
+    },
+    "extra": {
+        "symfony": {
+            "require": "^7.0|^8.0"
+        }
+    }
+}

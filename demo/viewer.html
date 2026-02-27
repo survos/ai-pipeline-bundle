@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Pipeline Viewer</title>
+  <style>
+    /* ── Reset & base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      background: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    a { color: #63b3ed; }
+
+    /* ── Layout ──────────────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+    @media (max-width: 700px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid #2d3748; }
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
+    .sidebar {
+      border-right: 1px solid #2d3748;
+      padding: 20px 16px;
+      background: #141720;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sidebar h2 { margin: 0 0 4px; font-size: 13px; color: #a0aec0; text-transform: uppercase; letter-spacing: .05em; }
+    .subject-img {
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #2d3748;
+      background: #1a1f2e;
+    }
+    .subject-url {
+      font-size: 11px;
+      color: #718096;
+      word-break: break-all;
+    }
+
+    /* ── Task nav ────────────────────────────────────────────────────── */
+    .task-nav { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+    .task-nav li button {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #e2e8f0;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .15s;
+    }
+    .task-nav li button:hover  { background: #1e2535; }
+    .task-nav li button.active { background: #1a365d; color: #90cdf4; }
+    .task-badge {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+    .badge-done    { background: #276749; color: #9ae6b4; }
+    .badge-skipped { background: #553c00; color: #fbd38d; }
+    .badge-failed  { background: #742a2a; color: #fed7d7; }
+    .badge-child   { background: #1a365d; color: #90cdf4; }
+
+    /* ── Main panel ──────────────────────────────────────────────────── */
+    .main {
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+    #empty-state {
+      color: #4a5568;
+      padding-top: 60px;
+      text-align: center;
+    }
+    #empty-state h1 { font-size: 22px; color: #718096; }
+
+    /* ── Task card ───────────────────────────────────────────────────── */
+    .task-card { display: none; }
+    .task-card.visible { display: block; }
+    .task-card h2 {
+      font-size: 20px;
+      margin: 0 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .task-card h2 span.task-name { color: #90cdf4; font-family: monospace; }
+
+    /* ── Token pill ──────────────────────────────────────────────────── */
+    .token-info {
+      display: inline-flex;
+      gap: 12px;
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: #718096;
+      margin-bottom: 16px;
+    }
+    .token-info span { color: #a0aec0; }
+
+    /* ── Field rows ──────────────────────────────────────────────────── */
+    .field { margin-bottom: 20px; }
+    .field-label {
+      font-size: 11px;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+    .field-value {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 10px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .field-value.prose { line-height: 1.7; }
+
+    /* ── Tag chips ───────────────────────────────────────────────────── */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      background: #2d3748;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: #e2e8f0;
+    }
+
+    /* ── Code / JSON block ───────────────────────────────────────────── */
+    details { margin-top: 12px; }
+    details summary {
+      cursor: pointer;
+      color: #63b3ed;
+      font-size: 12px;
+      user-select: none;
+    }
+    details summary:hover { color: #90cdf4; }
+    pre {
+      background: #141720;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      font-size: 12px;
+      color: #a0aec0;
+      margin: 8px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Artifact images ─────────────────────────────────────────────── */
+    .artifacts { margin-top: 20px; }
+    .artifacts h3 { font-size: 13px; color: #a0aec0; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 10px; }
+    .artifact-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    .artifact-item {
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a1f2e;
+      max-width: 220px;
+    }
+    .artifact-item img {
+      width: 100%;
+      display: block;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .artifact-item img:hover { opacity: .85; }
+    .artifact-caption {
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #718096;
+    }
+    .artifact-bbox {
+      font-size: 10px;
+      color: #4a5568;
+    }
+
+    /* ── Error state ─────────────────────────────────────────────────── */
+    .error-box {
+      background: #742a2a22;
+      border: 1px solid #742a2a;
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: #fed7d7;
+    }
+
+    /* ── URL bar at top ──────────────────────────────────────────────── */
+    .url-bar {
+      grid-column: 1 / -1;
+      background: #141720;
+      border-bottom: 1px solid #2d3748;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .url-bar input {
+      flex: 1;
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+    .url-bar input:focus { outline: none; border-color: #4299e1; }
+    .url-bar button {
+      background: #2b6cb0;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 16px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .url-bar button:hover { background: #3182ce; }
+    .url-bar label { font-size: 12px; color: #718096; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<div class="shell" style="grid-template-rows: auto 1fr; grid-template-columns: 300px 1fr;">
+
+  <!-- URL bar spanning full width -->
+  <div class="url-bar" style="grid-column: 1 / -1;">
+    <label>Subject URL or text:</label>
+    <input type="text" id="urlInput" placeholder="https://iiif.example.org/…/default.jpg" />
+    <button onclick="loadFromInput()">Load</button>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div>
+      <h2>Subject</h2>
+      <img id="subjectImg" class="subject-img" src="" alt="" style="display:none" />
+      <div id="subjectUrl" class="subject-url"></div>
+    </div>
+
+    <div>
+      <h2>Tasks</h2>
+      <ul class="task-nav" id="taskNav"></ul>
+    </div>
+  </aside>
+
+  <!-- Main panel -->
+  <main class="main">
+    <div id="empty-state">
+      <h1>AI Pipeline Viewer</h1>
+      <p>Enter a subject URL in the bar above, or append <code>?url=…</code> to this page's URL.</p>
+      <p style="font-size:12px;color:#4a5568">
+        The viewer resolves <code>sha1(url).json</code> in the same directory as this file.
+      </p>
+    </div>
+    <div id="taskCards"></div>
+  </main>
+
+</div>
+
+<script type="module">
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+async function sha1hex(str) {
+  const buf = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-1', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function isImageUrl(url) {
+  return /\.(jpe?g|png|gif|webp|avif|svg)(\?.*)?$/i.test(url)
+      || url.includes('/iiif/') || url.includes('default.jpg');
+}
+
+function badge(result) {
+  if (result?.failed)  return '<span class="task-badge badge-failed">failed</span>';
+  if (result?.skipped) return '<span class="task-badge badge-skipped">skipped</span>';
+  return '<span class="task-badge badge-done">done</span>';
+}
+
+// ── Field renderers ───────────────────────────────────────────────────────────
+
+function renderField(label, value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (Array.isArray(value) && value.length === 0) return '';
+
+  if (Array.isArray(value)) {
+    const chips = value.map(v => `<span class="chip">${esc(String(v))}</span>`).join('');
+    return `<div class="field"><div class="field-label">${esc(label)}</div><div class="chips">${chips}</div></div>`;
+  }
+
+  return `<div class="field">
+    <div class="field-label">${esc(label)}</div>
+    <div class="field-value prose">${esc(String(value))}</div>
+  </div>`;
+}
+
+// ── Artifact extraction ───────────────────────────────────────────────────────
+// Supports:
+//  1. Mistral OCR raw_response: pages[].images[] with bbox + optional base64
+//  2. Generic: result.artifacts[] array (future tasks)
+
+function extractArtifacts(taskName, result, baseDir) {
+  const artifacts = [];
+
+  // 1. Mistral OCR bounding-box images
+  const pages = result?.raw_response?.pages ?? [];
+  for (const page of pages) {
+    for (const img of (page.images ?? [])) {
+      // Prefer base64 if present, fall back to sibling file
+      const src = img.image_base64
+        ? `data:image/jpeg;base64,${img.image_base64}`
+        : `${baseDir}/${img.id}`;
+
+      artifacts.push({
+        id: img.id,
+        src,
+        bbox: img.top_left_x != null
+          ? `x:${img.top_left_x}–${img.bottom_right_x}, y:${img.top_left_y}–${img.bottom_right_y}`
+          : null,
+        annotation: img.image_annotation ?? null,
+      });
+    }
+  }
+
+  // 2. Generic artifacts array
+  for (const art of (result?.artifacts ?? [])) {
+    artifacts.push({
+      id: art.id ?? art.name ?? 'artifact',
+      src: art.src ?? art.url ?? `${baseDir}/${art.id}`,
+      bbox: null,
+      annotation: art.annotation ?? null,
+    });
+  }
+
+  return artifacts;
+}
+
+function renderArtifacts(artifacts, baseDir, subject) {
+  if (artifacts.length === 0) return '';
+
+  const items = artifacts.map(art => {
+    const viewerLink = `viewer.html?url=${encodeURIComponent(art.src)}&dir=${encodeURIComponent(baseDir)}`;
+    return `
+      <div class="artifact-item">
+        <img src="${esc(art.src)}" alt="${esc(art.id)}"
+             title="Click to open this sub-image in the pipeline viewer"
+             onclick="window.location='${viewerLink}'" />
+        <div class="artifact-caption">
+          <strong>${esc(art.id)}</strong>
+          ${art.bbox ? `<div class="artifact-bbox">${esc(art.bbox)}</div>` : ''}
+          ${art.annotation ? `<div>${esc(art.annotation)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `<div class="artifacts">
+    <h3>Extracted artifacts (${artifacts.length})</h3>
+    <div class="artifact-grid">${items}</div>
+  </div>`;
+}
+
+// ── Task card renderer ────────────────────────────────────────────────────────
+
+function renderTaskCard(taskName, result, baseDir, subject) {
+  if (result.failed) {
+    return `<div class="error-box">
+      <strong>Task failed</strong><br>${esc(result.error ?? '(no details)')}
+    </div>`;
+  }
+
+  if (result.skipped) {
+    return `<div style="color:#718096;padding:16px 0">
+      Skipped — ${esc(result.reason ?? 'supports() returned false')}
+    </div>`;
+  }
+
+  const KNOWN_FIELDS = ['text','description','title','summary','type','keywords',
+    'physicalAttributes','language','confidence','safety','people','places',
+    'subjects','dates','names','translation'];
+
+  let html = '';
+
+  // Tokens
+  if (result._tokens) {
+    const t = result._tokens;
+    html += `<div class="token-info">
+      <span>prompt <strong>${t.prompt?.toLocaleString()}</strong></span>
+      <span>completion <strong>${t.completion?.toLocaleString()}</strong></span>
+      <span>total <strong>${t.total?.toLocaleString()}</strong></span>
+      ${t.cached ? `<span>cached <strong>${t.cached?.toLocaleString()}</strong></span>` : ''}
+    </div>`;
+  }
+
+  // Known fields
+  for (const f of KNOWN_FIELDS) {
+    if (result[f] !== undefined && result[f] !== null && result[f] !== '') {
+      html += renderField(f.replace(/_/g,' '), result[f]);
+    }
+  }
+
+  // Artifacts (Mistral OCR sub-images etc.)
+  const artifacts = extractArtifacts(taskName, result, baseDir);
+  html += renderArtifacts(artifacts, baseDir, subject);
+
+  // Raw JSON (collapsed by default)
+  const stripped = Object.fromEntries(
+    Object.entries(result).filter(([k]) => k !== '_tokens')
+  );
+  html += `<details><summary>Raw JSON</summary>
+    <pre>${esc(JSON.stringify(stripped, null, 2))}</pre>
+  </details>`;
+
+  return html;
+}
+
+// ── Main loader ───────────────────────────────────────────────────────────────
+
+async function loadPipeline(subject, storeDir) {
+  const hash    = await sha1hex(subject);
+  const jsonUrl = `${storeDir}/${hash}.json`;
+
+  let data;
+  try {
+    const resp = await fetch(jsonUrl);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${jsonUrl}`);
+    data = await resp.json();
+  } catch (e) {
+    document.getElementById('empty-state').innerHTML = `
+      <h1>Could not load results</h1>
+      <p>${esc(e.message)}</p>
+      <p style="font-size:12px;color:#4a5568">Expected: <code>${esc(jsonUrl)}</code></p>`;
+    document.getElementById('empty-state').style.display = 'block';
+    document.getElementById('taskCards').innerHTML = '';
+    document.getElementById('taskNav').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('empty-state').style.display = 'none';
+
+  // Subject image
+  const imgEl  = document.getElementById('subjectImg');
+  const urlEl  = document.getElementById('subjectUrl');
+  urlEl.textContent = subject;
+  if (isImageUrl(subject)) {
+    imgEl.src   = subject;
+    imgEl.style.display = 'block';
+  } else {
+    imgEl.style.display = 'none';
+  }
+
+  // Build cards + nav
+  const nav   = document.getElementById('taskNav');
+  const cards = document.getElementById('taskCards');
+  nav.innerHTML   = '';
+  cards.innerHTML = '';
+
+  const results = data.results ?? {};
+  let firstId   = null;
+
+  for (const [taskName, result] of Object.entries(results)) {
+    const id      = `task-${taskName}`;
+    firstId       = firstId ?? id;
+
+    // Nav item
+    const li = document.createElement('li');
+    li.innerHTML = `<button id="nav-${id}" onclick="showCard('${id}')" title="${esc(taskName)}">
+      <span style="font-family:monospace">${esc(taskName)}</span>
+      ${badge(result)}
+    </button>`;
+    nav.appendChild(li);
+
+    // Card
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.id        = id;
+    card.innerHTML = `<h2><span class="task-name">${esc(taskName)}</span></h2>
+      ${renderTaskCard(taskName, result, storeDir, subject)}`;
+    cards.appendChild(card);
+  }
+
+  if (firstId) showCard(firstId);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+
+window.showCard = function(id) {
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.task-nav button').forEach(b => b.classList.remove('active'));
+  const card = document.getElementById(id);
+  const btn  = document.getElementById(`nav-${id}`);
+  if (card) card.classList.add('visible');
+  if (btn)  btn.classList.add('active');
+};
+
+// ── Entry point ───────────────────────────────────────────────────────────────
+
+window.loadFromInput = function() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  const dir = new URL(window.location.href).searchParams.get('dir') ?? '.';
+  loadPipeline(url, dir);
+  // Update address bar without reload
+  const u = new URL(window.location.href);
+  u.searchParams.set('url', url);
+  history.replaceState({}, '', u.toString());
+};
+
+// Auto-load from querystring
+const params  = new URL(window.location.href).searchParams;
+const initUrl = params.get('url');
+const initDir = params.get('dir') ?? '.';
+
+if (initUrl) {
+  document.getElementById('urlInput').value = initUrl;
+  loadPipeline(initUrl, initDir);
+}
+</script>
+</body>
+</html>
