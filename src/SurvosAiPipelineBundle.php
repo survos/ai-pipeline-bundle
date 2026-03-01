@@ -21,6 +21,7 @@ use Survos\AiPipelineBundle\Task\OcrTask;
 use Survos\AiPipelineBundle\Task\PeopleAndPlacesTask;
 use Survos\AiPipelineBundle\Task\SummarizeTask;
 use Survos\AiPipelineBundle\Task\TranscribeHandwritingTask;
+use Survos\AiPipelineBundle\Task\AnnotateHandwritingTask;
 use Survos\AiPipelineBundle\Task\TranslateTask;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -47,6 +48,7 @@ class SurvosAiPipelineBundle extends AbstractBundle
         'people_and_places'      => PeopleAndPlacesTask::class,
         'summarize'              => SummarizeTask::class,
         'transcribe_handwriting' => TranscribeHandwritingTask::class,
+        'annotate_handwriting'   => AnnotateHandwritingTask::class,
         'translate'              => TranslateTask::class,
     ];
 
