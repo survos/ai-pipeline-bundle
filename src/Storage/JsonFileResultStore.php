@@ -8,6 +8,9 @@ namespace Survos\AiPipelineBundle\Storage;
  *
  * The filename is derived from a SHA-1 of the subject string, so the same
  * subject always maps to the same file.  This allows incremental reruns.
+ *
+ * An explicit $key can be passed to override the SHA-1-based filename —
+ * useful for per-page result files (e.g. "{docSha1}-page-01").
  */
 final class JsonFileResultStore implements ResultStoreInterface
 {
@@ -18,13 +21,15 @@ final class JsonFileResultStore implements ResultStoreInterface
      * @param string|null $subject  Primary input (image URL, text blob, etc.)
      * @param string      $storeDir Directory to write JSON files into
      * @param array       $inputs   Named inputs available to tasks
+     * @param string|null $key      Explicit file key (omit to use sha1 of subject)
      */
     public function __construct(
         private readonly ?string $subject,
         private readonly string $storeDir,
         private readonly array $inputs = [],
+        ?string $key = null,
     ) {
-        $key            = sha1($subject ?? 'no-subject');
+        $key            = $key ?? sha1($subject ?? 'no-subject');
         $this->filePath = rtrim($storeDir, '/') . '/' . $key . '.json';
         $this->data     = $this->load();
     }

@@ -485,3 +485,65 @@ alongside the JSON result file. Currently detected:
 When Mistral returns `image_base64` the viewer uses it directly (no file needed).
 When it returns only bbox coordinates, the viewer looks for a sibling file named
 `{id}` (e.g. `img-0.jpeg`) in the same directory as the JSON.
+
+---
+
+## Database Integration (Doctrine)
+
+For production apps that store results in a database rather than JSON files, implement `ResultStoreInterface` backed by your entity. See [docs/integration.md](docs/integration.md) for a complete guide covering:
+
+- Entity schema (JSON column for `aiResults`)
+- Custom `DoctrineResultStore` implementation
+- Symfony Messenger integration for async processing
+- Scanstation integration checklist
+- Architecture diagram
+
+Quick example:
+
+```php
+// Your entity has: #[ORM\Column(type: 'json')] private ?array $aiResults = null;
+
+$store = new DoctrineResultStore($entity, $em);
+$pipeline = ['ocr_mistral', 'classify', 'extract_metadata', 'generate_title'];
+$runner->runAll($store, $pipeline);
+
+// Results are flushed to the entity after each task
+$title = $entity->getAiResult('generate_title')['title'];
+```
+
+---
+
+## Built-in Task Reference
+
+| Task | Agent | Model | Input | Key outputs |
+|---|---|---|---|---|
+| `ocr_mistral` | _(direct HTTP)_ | mistral-ocr-latest | `image_url` | `text`, `pages[]`, `layout_blocks[]`, `image_blocks[]` |
+| `ocr` | `ai.agent.ocr` | gpt-4o | `image_url` | `text`, `blocks[]`, `language` |
+| `classify` | `ai.agent.classify` | gpt-4o-mini | `image_url` | `type`, `subtype`, `confidence` |
+| `basic_description` | `ai.agent.mistral_vision` | gpt-4o | `image_url` | `description`, `physicalAttributes[]` |
+| `context_description` | `ai.agent.mistral_vision` | gpt-4o | `image_url` + prior | `description` |
+| `extract_metadata` | `ai.agent.metadata` | gpt-4o-mini | `image_url` or prior OCR | `dateRange`, `people[]`, `places[]` |
+| `generate_title` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `title`, `alternativeTitles[]` |
+| `keywords` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `keywords[]`, `safety` |
+| `people_and_places` | `ai.agent.metadata` | gpt-4o-mini | prior OCR | `people[]`, `places[]`, `organisations[]` |
+| `summarize` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `summary`, `language` |
+| `transcribe_handwriting` | `ai.agent.mistral_vision` | gpt-4o | `image_url` | `text`, `blocks[]`, `confidence` |
+| `annotate_handwriting` | `ai.agent.mistral_vision` | gpt-4o | prior `ocr_mistral` | `annotated_text`, `pages[]` |
+| `translate` | `ai.agent.metadata` | gpt-4o-mini | prior OCR | `translation`, `sourceLanguage` |
+| `layout` | `ai.agent.metadata` | gpt-4o-mini | prior `ocr_mistral` | `blocks[]` with types/positions |
+
+### Pipeline presets (common combinations)
+
+```
+# Handwritten historical documents
+ocr_mistral → annotate_handwriting → transcribe_handwriting → people_and_places → extract_metadata → generate_title
+
+# Printed documents / newspapers
+ocr_mistral → classify → extract_metadata → summarize → keywords
+
+# Photographs / trading cards
+ocr_mistral → classify → basic_description → keywords
+
+# Full analysis (everything)
+ocr_mistral → classify → summarize → keywords → transcribe_handwriting → annotate_handwriting → people_and_places → extract_metadata → generate_title
+```
