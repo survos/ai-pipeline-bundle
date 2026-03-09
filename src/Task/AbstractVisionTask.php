@@ -5,7 +5,6 @@ namespace Survos\AiPipelineBundle\Task;
 
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Content\Image;
-use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -127,6 +126,8 @@ abstract class AbstractVisionTask implements AiTaskInterface
                 'completion' => $usage->getCompletionTokens(),
                 'total'      => $usage->getTotalTokens(),
                 'cached'     => $usage->getCachedTokens(),
+                'cache_creation' => $usage->getCacheCreationTokens(),
+                'cache_read' => $usage->getCacheReadTokens(),
             ];
         }
 

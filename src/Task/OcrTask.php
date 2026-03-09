@@ -86,6 +86,8 @@ final class OcrTask implements AiTaskInterface
                 'completion' => $tokenUsage->getCompletionTokens(),
                 'total'      => $tokenUsage->getTotalTokens(),
                 'cached'     => $tokenUsage->getCachedTokens(),
+                'cache_creation' => $tokenUsage->getCacheCreationTokens(),
+                'cache_read' => $tokenUsage->getCacheReadTokens(),
             ];
         }
 

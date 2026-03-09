@@ -3,7 +3,7 @@
 (Also, see https://docs.kreuzberg.dev/guides/docker/)
 ## Goal
 
-Make “OCR” feel like a first-class **Symfony AI Tool** (Symfony/AI v0.5.x) so your pipelines and agents can call:
+Make “OCR” feel like a first-class **Symfony AI Tool** (Symfony/AI v0.6.x) so your pipelines and agents can call:
 
 - `ocr_extract(...)`
 
