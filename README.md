@@ -547,3 +547,7 @@ ocr_mistral → classify → basic_description → keywords
 # Full analysis (everything)
 ocr_mistral → classify → summarize → keywords → transcribe_handwriting → annotate_handwriting → people_and_places → extract_metadata → generate_title
 ```
+
+# @todo:
+
+* https://agentnativedev.medium.com/parse-any-document-with-1-7b-multilingual-model-c4b12db7d755
