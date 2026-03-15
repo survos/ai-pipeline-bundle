@@ -31,7 +31,7 @@ use Twig\Environment as TwigEnvironment;
 abstract class AbstractVisionTask implements AiTaskInterface
 {
     public function __construct(
-        protected readonly AgentInterface $agent,
+        protected readonly ?AgentInterface $agent,
         protected readonly TwigEnvironment $twig,
         protected readonly HttpClientInterface $httpClient,
     ) {}
@@ -110,6 +110,12 @@ abstract class AbstractVisionTask implements AiTaskInterface
             $options['response_format'] = $fmt;
         }
 
+        if ($this->agent === null) {
+            throw new \RuntimeException(sprintf(
+                'AI agent not configured for task "%s". Add the required agent to your ai.yaml configuration.',
+                $this->getTask()
+            ));
+        }
         $result  = $this->agent->call($messages, $options);
         $content = $result->getContent();
 

@@ -112,11 +112,43 @@ class SurvosAiPipelineBundle extends AbstractBundle
             if (in_array($taskName, $disabled, true)) {
                 continue;
             }
+
+            // Resolve the agent service ID from the task's #[Autowire] attribute.
+            // Skip registration if the agent service doesn't exist — this makes all
+            // AI tasks optional: the bundle works without symfony/ai configured.
+            $agentServiceId = $this->resolveAgentServiceId($taskClass);
+            if ($agentServiceId !== null && !$builder->hasDefinition($agentServiceId) && !$builder->hasAlias($agentServiceId)) {
+                continue;
+            }
+
             $services->set($taskClass)
                 ->autowire()
                 ->autoconfigure()
                 ->tag('ai_pipeline.task');
         }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Read the #[Autowire(service: '...')] attribute from the task's constructor
+     * to find which agent service it needs.
+     */
+    private function resolveAgentServiceId(string $taskClass): ?string
+    {
+        try {
+            $rc = new \ReflectionClass($taskClass);
+            foreach ($rc->getConstructor()?->getParameters() ?? [] as $param) {
+                foreach ($param->getAttributes(\Symfony\Component\DependencyInjection\Attribute\Autowire::class) as $attr) {
+                    $args = $attr->getArguments();
+                    $svc  = $args['service'] ?? $args[0] ?? null;
+                    if (is_string($svc) && str_starts_with($svc, 'ai.agent.')) {
+                        return $svc;
+                    }
+                }
+            }
+        } catch (\Throwable) {}
+        return null;
     }
 
     // ── Template path ─────────────────────────────────────────────────────────
