@@ -1,0 +1,11 @@
+{% if context %}
+Existing metadata (do NOT repeat these in your response — only fill what is null/missing):
+{% for key, value in context %}
+{% if value is not null and value != '' and value != [] %}
+- {{ key|replace({'dcterms:': '', '_': ' '})|title }}: {% if value is iterable %}{{ value|join(', ') }}{% else %}{{ value }}{% endif %}
+
+{% endif %}
+{% endfor %}
+
+{% endif %}
+Analyse the image and fill in missing metadata fields. Generate the dense_summary combining both the image and the known metadata above.

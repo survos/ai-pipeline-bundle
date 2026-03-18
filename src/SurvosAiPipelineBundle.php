@@ -23,6 +23,7 @@ use Survos\AiPipelineBundle\Task\SummarizeTask;
 use Survos\AiPipelineBundle\Task\TranscribeHandwritingTask;
 use Survos\AiPipelineBundle\Task\AnnotateHandwritingTask;
 use Survos\AiPipelineBundle\Task\TranslateTask;
+use Survos\AiPipelineBundle\Task\EnrichFromThumbnailTask;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -50,6 +51,8 @@ class SurvosAiPipelineBundle extends AbstractBundle
         'transcribe_handwriting' => TranscribeHandwritingTask::class,
         'annotate_handwriting'   => AnnotateHandwritingTask::class,
         'translate'              => TranslateTask::class,
+        // Single-pass thumbnail enrichment — replaces running 5 tasks separately (~80% cheaper)
+        'enrich_from_thumbnail'  => EnrichFromThumbnailTask::class,
     ];
 
     // ── Configuration schema ──────────────────────────────────────────────────
@@ -113,11 +116,11 @@ class SurvosAiPipelineBundle extends AbstractBundle
                 continue;
             }
 
-            // Resolve the agent service ID from the task's #[Autowire] attribute.
-            // Skip registration if the agent service doesn't exist — this makes all
-            // AI tasks optional: the bundle works without symfony/ai configured.
+            // Skip task registration only when symfony/ai-agent is not installed at all.
+            // We cannot check individual agent service IDs at compile time — symfony/ai
+            // registers them via its own extension which runs after ours.
             $agentServiceId = $this->resolveAgentServiceId($taskClass);
-            if ($agentServiceId !== null && !$builder->hasDefinition($agentServiceId) && !$builder->hasAlias($agentServiceId)) {
+            if ($agentServiceId !== null && !interface_exists(\Symfony\AI\Agent\AgentInterface::class)) {
                 continue;
             }
 
