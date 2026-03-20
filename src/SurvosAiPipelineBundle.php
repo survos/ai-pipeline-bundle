@@ -23,7 +23,9 @@ use Survos\AiPipelineBundle\Task\SummarizeTask;
 use Survos\AiPipelineBundle\Task\TranscribeHandwritingTask;
 use Survos\AiPipelineBundle\Task\AnnotateHandwritingTask;
 use Survos\AiPipelineBundle\Task\TranslateTask;
+use Survos\AiPipelineBundle\Task\CensusExtractionTask;
 use Survos\AiPipelineBundle\Task\EnrichFromThumbnailTask;
+use Survos\AiPipelineBundle\Twig\Components\PipelineActions;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -53,6 +55,7 @@ class SurvosAiPipelineBundle extends AbstractBundle
         'translate'              => TranslateTask::class,
         // Single-pass thumbnail enrichment — replaces running 5 tasks separately (~80% cheaper)
         'enrich_from_thumbnail'  => EnrichFromThumbnailTask::class,
+        'extract_census'         => CensusExtractionTask::class,
     ];
 
     // ── Configuration schema ──────────────────────────────────────────────────
@@ -111,6 +114,14 @@ class SurvosAiPipelineBundle extends AbstractBundle
         // Each is registered as a tagged service unless listed in disabled_tasks.
         // Apps can still override individual tasks by defining their own service
         // with the same class name (it will simply replace this registration).
+        // Register PipelineActions Twig component when UX Twig Component is available
+        if (class_exists(\Symfony\UX\TwigComponent\Attribute\AsTwigComponent::class)) {
+            $builder->register(PipelineActions::class)
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
+                ->setPublic(true);
+        }
+
         foreach (self::DEFAULT_TASKS as $taskName => $taskClass) {
             if (in_array($taskName, $disabled, true)) {
                 continue;
@@ -166,6 +177,13 @@ class SurvosAiPipelineBundle extends AbstractBundle
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);
+
+        // Register template namespace @SurvosAiPipeline
+        if ($container->hasExtension('twig')) {
+            $container->prependExtensionConfig('twig', [
+                'paths' => [dirname(__DIR__) . '/templates' => 'SurvosAiPipeline'],
+            ]);
+        }
 
         $container->registerForAutoconfiguration(AiTaskInterface::class)
             ->addTag('ai_pipeline.task');

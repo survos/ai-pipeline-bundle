@@ -122,7 +122,7 @@ abstract class AbstractVisionTask implements AiTaskInterface
         $data = match (true) {
             $content instanceof \JsonSerializable => $content->jsonSerialize(),
             is_array($content)                   => $content,
-            default                              => ['raw' => (string) $content],
+            default                              => $this->parseRawContent((string) $content),
         };
 
         $usage = $result->getMetadata()->get('token_usage');
@@ -194,6 +194,25 @@ abstract class AbstractVisionTask implements AiTaskInterface
         $mime = trim(explode(';', $contentType)[0]);
 
         return new Image($binary, $mime);
+    }
+
+    /**
+     * Parse raw string content from the AI — strip markdown fences and decode JSON.
+     * Falls back to {'raw': $content} if not valid JSON.
+     */
+    private function parseRawContent(string $content): array
+    {
+        // Strip markdown code fences: ```json ... ``` or ``` ... ```
+        $stripped = preg_replace('/^```(?:json)?\s*/i', '', trim($content));
+        $stripped = preg_replace('/\s*```\s*$/', '', $stripped ?? $content);
+        $stripped = trim($stripped ?? $content);
+
+        $decoded = json_decode($stripped, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        return ['raw' => $content];
     }
 
     protected function ocrText(array $priorResults): ?string

@@ -1,0 +1,22 @@
+{
+  "name": "@survos/ai-pipeline-bundle",
+  "description": "Stimulus controllers for AI pipeline task UI",
+  "license": "MIT",
+  "version": "1.0.0",
+  "symfony": {
+    "controllers": {
+      "pipeline-actions": {
+        "main": "src/controllers/pipeline_actions_controller.js",
+        "webpackMode": "eager",
+        "fetch": "lazy",
+        "enabled": true
+      }
+    }
+  },
+  "importmap": {
+    "@hotwired/stimulus": "^3.2.2"
+  },
+  "peerDependencies": {
+    "@hotwired/stimulus": "^3.2.2"
+  }
+}

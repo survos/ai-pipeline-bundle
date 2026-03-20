@@ -118,6 +118,7 @@ final class AiPipelineRunner
             $this->logger->error('AiPipelineRunner: "{task}" failed: {error}', [
                 'task'  => $taskName,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             $result = ['failed' => true, 'error' => $e->getMessage()];
             $store->saveResult($taskName, $result);

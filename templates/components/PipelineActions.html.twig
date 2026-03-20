@@ -1,0 +1,120 @@
+{#
+  PipelineActions component — AI pipeline + task trigger UI.
+
+  Renders:
+  - Named pipeline buttons (Quick Enrich, Full Pipeline, etc.)
+  - Per-task grid with status badges and individual run buttons
+  - Lock/queue status
+
+  Props:
+    entity          — the entity (Image, Asset, etc.)
+    taskRoute       — route name for POST /{taskName}
+    pipelineRoute   — route name for POST /{pipelineName}
+    routeParams     — base route params (e.g. {imageId: '...'})
+#}
+
+{% set locked  = this.isLocked() %}
+{% set queued  = this.queuedTasks() %}
+{% set tasks   = this.tasks() %}
+{% set pipes   = this.pipelines() %}
+
+<div class="card mb-3" data-controller="pipeline-actions"
+     data-pipeline-actions-task-route-value="{{ taskRoute }}"
+     data-pipeline-actions-pipeline-route-value="{{ pipelineRoute }}"
+     data-pipeline-actions-route-params-value="{{ routeParams|json_encode }}">
+
+    <div class="card-header fw-semibold d-flex align-items-center gap-2">
+        {{ ux_icon('mdi:robot-outline') }}
+        AI Pipelines
+        {% if locked %}
+            <span class="badge bg-warning-lt ms-auto">
+                {{ ux_icon('mdi:lock-outline') }} Processing…
+            </span>
+        {% elseif queued %}
+            <span class="badge bg-blue-lt ms-auto">
+                {{ ux_icon('mdi:clock-outline') }} {{ queued|length }} queued
+            </span>
+        {% endif %}
+    </div>
+
+    {# ── Named pipeline buttons ──────────────────────────────────── #}
+    <div class="card-body border-bottom pb-3">
+        <div class="small text-muted mb-2">Run full pipeline:</div>
+        <div class="d-flex flex-wrap gap-2">
+            {% for name, pipe in pipes %}
+                <button class="btn btn-sm btn-outline-primary"
+                        {{ locked ? 'disabled' : '' }}
+                        title="{{ pipe.description }}"
+                        data-action="click->pipeline-actions#runPipeline"
+                        data-pipeline-actions-pipeline-param="{{ name }}">
+                    {{ ux_icon(pipe.icon|default('mdi:play-circle-outline')) }}
+                    {{ pipe.label }}
+                    <span class="badge bg-muted-lt ms-1" style="font-size:.6rem;">
+                        {{ pipe.tasks|length }} task{{ pipe.tasks|length == 1 ? '' : 's' }}
+                    </span>
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# ── Per-task grid ───────────────────────────────────────────── #}
+    <div class="card-body p-0">
+        <div class="small text-muted px-3 pt-2 pb-1">Individual tasks:</div>
+        <div class="list-group list-group-flush" id="pipeline-task-list">
+            {% for taskName, task in tasks %}
+                <div class="list-group-item d-flex align-items-center gap-3 py-2 px-3"
+                     id="task-row-{{ taskName|replace({'_': '-'}) }}">
+
+                    {# Status icon #}
+                    {% if task.failed %}
+                        {{ ux_icon('mdi:alert-circle-outline', {class: 'text-danger flex-shrink-0'}) }}
+                    {% elseif task.done %}
+                        {{ ux_icon('mdi:check-circle-outline', {class: 'text-success flex-shrink-0'}) }}
+                    {% else %}
+                        {{ ux_icon('mdi:circle-outline', {class: 'text-muted flex-shrink-0'}) }}
+                    {% endif %}
+
+                    {# Task name + summary #}
+                    <div class="flex-fill" style="min-width:0;">
+                        <div class="fw-semibold" style="font-size:.8rem;">{{ task.label }}</div>
+                        {% if task.done and task.result %}
+                            <div class="text-muted text-truncate" style="font-size:.72rem; max-width:30rem;">
+                                {% if task.result.dense_summary is defined %}
+                                    {{ task.result.dense_summary|u.truncate(100, '…') }}
+                                {% elseif task.result.text is defined %}
+                                    {{ task.result.text|u.truncate(100, '…') }}
+                                {% elseif task.result.title is defined %}
+                                    {{ task.result.title }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# Group badge #}
+                    <span class="badge {{ task.group == 'ocr' ? 'bg-orange-lt' : 'bg-blue-lt' }}"
+                          style="font-size:.58rem;">{{ task.group }}</span>
+
+                    {# Run button #}
+                    {% if taskRoute %}
+                        <button class="btn btn-sm {{ task.done ? 'btn-outline-secondary' : 'btn-outline-primary' }} flex-shrink-0"
+                                style="font-size:.7rem; padding:.2rem .5rem;"
+                                {{ locked ? 'disabled' : '' }}
+                                data-action="click->pipeline-actions#runTask"
+                                data-pipeline-actions-task-param="{{ taskName }}"
+                                title="{{ task.done ? 'Re-run ' ~ task.label : 'Run ' ~ task.label }}">
+                            {{ task.done ? '↺ Re-run' : '▶ Run' }}
+                        </button>
+                    {% endif %}
+
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# ── Result log ──────────────────────────────────────────────── #}
+    <div id="pipeline-task-log" class="px-3 pb-2" style="display:none;">
+        <div class="small text-muted mt-2">Recent results:</div>
+        <div id="pipeline-task-log-entries"></div>
+    </div>
+
+</div>
