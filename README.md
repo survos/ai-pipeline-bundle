@@ -486,6 +486,9 @@ When Mistral returns `image_base64` the viewer uses it directly (no file needed)
 When it returns only bbox coordinates, the viewer looks for a sibling file named
 `{id}` (e.g. `img-0.jpeg`) in the same directory as the JSON.
 
+Check out https://medium.com/coding-nexus/new-ocr-model-chandra-by-datalab-i-tested-ramanujans-handwritten-letter-from-1913-0c0ee5fbdcb4
+
+
 ---
 
 ## Database Integration (Doctrine)
