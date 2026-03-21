@@ -103,12 +103,17 @@ export default class extends Controller {
         if (!routeName) return null
         // Use Symfony's Routing component exposed via FOSJsRoutingBundle / expose=true
         if (typeof Routing !== 'undefined') {
-            return Routing.generate(routeName, { ...this.routeParamsValue, ...extraParams })
+            try {
+                return Routing.generate(routeName, { ...this.routeParamsValue, ...extraParams })
+            } catch (e) {
+                console.warn(`[pipeline-actions] Routing.generate failed for "${routeName}":`, e.message)
+            }
         }
-        // Fallback: reconstruct from current path
-        const base = window.location.pathname.replace(/\/$/, '')
-        if (extraParams.taskName)     return `${base}/task/${extraParams.taskName}`
-        if (extraParams.pipelineName) return `${base}/pipeline/${extraParams.pipelineName}`
+
+        console.error(
+            `[pipeline-actions] Cannot build URL for route "${routeName}". ` +
+            `Add options: ['expose' => true] to the route so FOSJsRoutingBundle can generate it.`
+        )
         return null
     }
 
