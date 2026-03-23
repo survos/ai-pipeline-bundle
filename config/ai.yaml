@@ -10,6 +10,8 @@ ai:
     platform:
         openai:
             api_key: '%env(OPENAI_API_KEY)%'
+        google:
+            api_key: '%env(GOOGLE_API_KEY)%'
         mistral:
             api_key: '%env(MISTRAL_API_KEY)%'
 
@@ -35,18 +37,22 @@ ai:
 
         # ── Classification ─────────────────────────────────────────────────────
         # Used by: ClassifyTask
+        # Gemini options:
+        #   - gemini-2.0-flash-lite (lowest cost)
+        #   - gemini-2.5-flash (better quality JSON output)
         classify:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.0-flash-lite'
             prompt:
                 text: 'You are an expert document classifier. Return structured JSON only.'
             tools: false
 
         # ── Description ────────────────────────────────────────────────────────
         # Used by: BasicDescriptionTask, ContextDescriptionTask, KeywordsTask
+        # Keep this lightweight for large batches.
         description:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.0-flash-lite'
             prompt:
                 text: 'You are a museum archivist generating visual descriptions and keyword lists. Return structured JSON only.'
             tools: false
@@ -54,10 +60,13 @@ ai:
         # ── Metadata / NER / title / summarize ────────────────────────────────
         # Used by: ExtractMetadataTask, GenerateTitleTask, PeopleAndPlacesTask,
         #          SummarizeTask, TranslateTask
-        # Switch to gpt-4o for higher-precision collections.
+        # Recommended default for quality/cost balance: gemini-2.5-flash
+        # Alternatives:
+        #   - claude-haiku-4-5-20251001 (Anthropic, strong structured summaries)
+        #   - gpt-4.1-mini / gpt-4o-mini / gpt-4o (OpenAI, batch workflows)
         metadata:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.5-flash'
             prompt:
                 text: 'You are a specialist archivist extracting structured metadata from historical documents and objects. Return structured JSON only.'
             tools: false

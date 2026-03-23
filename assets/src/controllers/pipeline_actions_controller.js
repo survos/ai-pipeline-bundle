@@ -24,11 +24,15 @@ export default class extends Controller {
 
     static targets = ['taskLog', 'taskLogEntries']
 
+    connect() {
+        console.log('✅ pipeline-actions controller connected');
+    }
+
     // ── Actions ────────────────────────────────────────────────────────────────
 
     async runTask(event) {
         const btn      = event.currentTarget
-        const taskName = btn.dataset.pipelineActionsTaskParam
+        const taskName = event.params.task
         if (!taskName || !this.taskRouteValue) return
 
         await this._post(
@@ -40,7 +44,7 @@ export default class extends Controller {
 
     async runPipeline(event) {
         const btn          = event.currentTarget
-        const pipelineName = btn.dataset.pipelineActionsPipelineParam
+        const pipelineName = event.params.pipeline
         if (!pipelineName || !this.pipelineRouteValue) return
 
         await this._post(

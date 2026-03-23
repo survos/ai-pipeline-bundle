@@ -1,0 +1,150 @@
+# Image Analysis Tools for ScanStation: CPU-Local & Low-Cost API Options
+
+## Context
+
+Processing ~2 million images for museum/historical digitization (ScanStation/Museado). Goal: maximize local CPU processing to minimize API costs, using a tiered pipeline that routes images to progressively more expensive tools only when needed.
+
+## The Core Strategy: Tiered Pre-filtering
+
+Run cheap/free tools first. Use confidence scores and flags to route images. Only send to paid APIs what can't be handled locally.
+```
+Image ingested
+  ↓
+1. Exif/metadata extraction (Pillow/exiftool) — free, <0.01s
+2. Perceptual hash (pHash) — dedup check, free, <0.01s
+3. Edge detection (OpenCV) — "has text?" boolean flag, free, <0.05s
+4. CLIP/SigLIP zero-shot tagging — category + confidence, free, ~0.2s CPU
+5. ViT-GPT2 or BLIP caption — only for complex/ambiguous scenes, free, 0.5–3s CPU
+6. Tesseract OCR — only for images flagged as having text, free, 0.5–2s CPU
+7. Paid API (Gemini Flash-Lite or Claude Haiku) — only for low-confidence or high-value items
+```
+
+Target: 80–90% of images fully processed locally. Only ~20% hit the paid API tier.
+
+---
+
+## Tier 1: Free, Instant (No ML)
+
+| Tool | Install | Speed | Output |
+|---|---|---|---|
+| Tesseract 5 (OCR) | `apt install tesseract-ocr` | 0.5–2s | Full text, bounding boxes |
+| OpenCV edge detection | `pip install opencv-python` | <0.05s | Boolean "has text" flag |
+| pHash / imagehash | `pip install imagehash` | <0.01s | Hash, similarity score |
+| Pillow / exiftool | `pip install Pillow` | <0.01s | Date, GPS, camera model, existing keywords |
+
+---
+
+## Tier 2: Free, CPU ML (Zero Cost, Compute Time Only)
+
+All installable via `pip install transformers` (HuggingFace). Models download on first run (~200MB–1GB each).
+
+| Tool | Speed (CPU) | 2M images (1 core) | Output |
+|---|---|---|---|
+| CLIP (`open_clip_torch`) | ~0.2s | ~111 CPU-hrs | Tags from your vocab + confidence scores |
+| SigLIP (Google, via transformers) | ~0.2s | ~111 CPU-hrs | Same as CLIP, often better accuracy |
+| ViT-GPT2 | ~0.5s | ~278 CPU-hrs | 1-sentence free-text caption |
+| BLIP (original, not BLIP-2) | 1–3s | ~500–1,600 CPU-hrs | Caption + Visual Q&A |
+| moondream2 | 2–5s | ~1,100+ CPU-hrs | Caption, detect, point, count — structured queries |
+
+### Notes on CLIP/SigLIP for Museum Use
+
+- Pre-encode your label list **once** (e.g. `["portrait", "document", "newspaper", "map", "artwork", "outdoor scene", "group photo", "handwritten letter"]`)
+- Then each image = one forward pass + cosine similarity — very fast
+- Weakness: trained on COCO/web images; may struggle with sepia, daguerreotypes, damaged photos
+- **Strongly recommended**: benchmark on 500 representative samples from your actual collections before committing
+
+### moondream2 Notes
+
+- Supports structured queries: `"what objects are visible?"`, `"is there handwriting?"`, `"describe the people in this image"`
+- Maps well to Dublin Core / museum metadata schema
+- Slow on CPU but structured output is worth it for high-value items
+
+---
+
+## Tier 3: Low-Cost API (Structured Output, High Quality)
+
+All support JSON output mode. Costs assume ~512×512px images, short prompt, ~50 output tokens.
+
+**Important**: Downsample to 512px before any API call. OpenAI/Google pricing scales with image dimensions (patch counts). Resizing cuts cost 4–8× with minimal quality loss for captioning.
+
+| Provider | Model | ~$/image | 2M images | Notes |
+|---|---|---|---|---|
+| Google | `gemini-2.0-flash-lite` | ~$0.00008 | ~$160 | Cheapest; good for bulk caption + keywords |
+| Google | `gemini-2.5-flash` | ~$0.0003 | ~$600 | Better quality; structured JSON; recommended |
+| Anthropic | `claude-haiku-4-5-20251001` | ~$0.0004 | ~$800 | Strong structured output; good at historical content |
+| OpenAI | `gpt-4.1-mini` (batch) | ~$0.0005 | ~$1,000 | Batch API = 50% off; async 24h turnaround |
+| OpenAI | `gpt-4o-mini` (batch) | ~$0.001 | ~$2,000 | Strong vision; good OCR assist |
+| OpenAI | `gpt-4o` (batch) | ~$0.005 | ~$10,000 | Best quality; handwriting; complex historical scenes |
+
+### Batch API Notes (OpenAI)
+- 50% discount vs real-time; results returned within 24 hours
+- Ideal for bulk processing where latency doesn't matter
+- Google also has batch mode for Gemini with similar savings
+
+---
+
+## Recommended Pipeline for ScanStation
+
+### Phase 1: Bulk local processing (all 2M images)
+1. Metadata extraction + dedup (pHash) — eliminate duplicates immediately
+2. OpenCV edge detection → `has_text` flag
+3. CLIP/SigLIP → `category` tag + `confidence` score
+4. Store results in Postgres with `inst_id` partition
+
+### Phase 2: Selective deeper processing
+- If `has_text = true` → Tesseract OCR
+- If `confidence < 0.7` OR `category = "complex_scene"` → ViT-GPT2 or BLIP caption
+- If item is flagged "high value" by institution → Gemini 2.5 Flash or Claude Haiku
+
+### Phase 3: API escalation (target: ≤20% of images)
+- Send to Gemini Flash-Lite for bulk unknown/low-confidence
+- Reserve GPT-4o batch for handwritten documents, damaged images, or items with grant reporting requirements
+
+---
+
+## Cost Scenarios at 2M Images
+
+| Strategy | API images | Estimated cost |
+|---|---|---|
+| All local (CLIP + BLIP) | 0 | $0 + compute time |
+| 20% to Gemini Flash-Lite | 400K | ~$32 |
+| 20% to Gemini 2.5 Flash | 400K | ~$120 |
+| 20% to Claude Haiku | 400K | ~$160 |
+| 20% to GPT-4o-mini batch | 400K | ~$400 |
+| All to GPT-4o batch | 2M | ~$10,000 |
+
+---
+
+## Implementation Notes
+
+### Python sidecar approach (for Symfony integration)
+Run a FastAPI or simple HTTP service on localhost that accepts image paths and returns JSON. Symfony calls it via HTTP. Keeps Python dependencies isolated from PHP stack.
+```
+POST /analyze
+{ "path": "/mnt/images/abc123.jpg", "tasks": ["clip", "ocr", "caption"] }
+
+→ { "tags": ["portrait", "outdoor"], "confidence": 0.87, "has_text": false, "caption": "..." }
+```
+
+### Parallelization
+- 8 CPU cores → divide wall-clock time by 8
+- CLIP/SigLIP: use `batch_size=32` for significant throughput improvement
+- pHash + OpenCV: embarrassingly parallel, use Python multiprocessing
+
+### Model storage
+- Models live in `~/.cache/huggingface/` after first download
+- CLIP ViT-B/32: ~350MB
+- SigLIP base: ~400MB
+- BLIP: ~900MB
+- moondream2: ~1.9GB
+
+---
+
+## Open Questions / Next Steps
+
+- [ ] Benchmark CLIP vs SigLIP on 500 actual ScanStation images (portraits, documents, maps, newspapers)
+- [ ] Decide on structured output schema for metadata (map to Dublin Core fields?)
+- [ ] Evaluate moondream2 for "has handwriting" detection specifically
+- [ ] Build FastAPI sidecar service and wire to Symfony via HTTP
+- [ ] Set confidence threshold for API escalation (start at 0.7, tune from there)
+- [ ] Evaluate Gemini Flash-Lite vs Claude Haiku on historical photograph samples

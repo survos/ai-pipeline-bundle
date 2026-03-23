@@ -28,6 +28,8 @@ ai:
     platform:
         openai:
             api_key: '%env(OPENAI_API_KEY)%'
+        google:
+            api_key: '%env(GOOGLE_API_KEY)%'
         mistral:
             api_key: '%env(MISTRAL_API_KEY)%'
 
@@ -37,34 +39,54 @@ ai:
 
         # Vision + handwriting (used by transcribe_handwriting, annotate_handwriting)
         mistral_vision:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.5-flash'
             prompt:
                 text: 'You are an expert at reading historical documents. Return structured JSON only.'
             tools: false
 
         # Classification (cheap model)
         classify:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.0-flash-lite'
             prompt:
                 text: 'You are an expert document classifier. Return structured JSON only.'
             tools: false
 
         # Metadata extraction, NER, title, summarize
         metadata:
-            platform: 'ai.platform.openai'
-            model: 'gpt-4o-mini'
+            platform: 'ai.platform.google'
+            model: 'gemini-2.5-flash'
             prompt:
                 text: 'You are a specialist archivist extracting structured metadata. Return structured JSON only.'
             tools: false
 ```
 
+### Provider model options (cost-oriented)
+
+The pipeline task code is provider-agnostic. Most provider changes are config-only (switch `platform` + `model` on the existing agent names).
+
+| Provider | Model | Approx cost / image | 2M images | Typical use |
+|---|---|---|---|---|
+| Google | `gemini-2.0-flash-lite` | ~$0.00008 | ~$160 | Cheapest bulk captioning/keywords |
+| Google | `gemini-2.5-flash` | ~$0.0003 | ~$600 | Better quality structured JSON (recommended baseline) |
+| Anthropic | `claude-haiku-4-5-20251001` | ~$0.0004 | ~$800 | Strong structured historical summaries |
+| OpenAI | `gpt-4.1-mini` (batch) | ~$0.0005 | ~$1,000 | Strong quality/price if async batch is OK |
+| OpenAI | `gpt-4o-mini` (batch) | ~$0.001 | ~$2,000 | Vision + OCR assist |
+| OpenAI | `gpt-4o` (batch) | ~$0.005 | ~$10,000 | Highest quality for difficult handwriting/layout |
+
+For this bundle, a practical default is:
+- `classify` + `description`: `gemini-2.0-flash-lite`
+- `metadata`: `gemini-2.5-flash`
+- Keep `ocr_mistral` direct for layout/bounding boxes and difficult scans
+
+Then selectively escalate to Claude/OpenAI on flagged records (high-value collections, low confidence, difficult handwriting).
+
 **Key agent names used by built-in tasks:**
 
 | Agent service ID | Used by tasks | Notes |
 |---|---|---|
-| `ai.agent.ocr` | `ocr` | GPT-4o vision OCR |
+| `ai.agent.ocr` | `ocr` | Vision OCR model configured in your `ai.yaml` |
 | `ai.agent.mistral_vision` | `transcribe_handwriting`, `annotate_handwriting`, `basic_description`, `context_description` | Vision + text |
 | `ai.agent.classify` | `classify` | Cheap classification |
 | `ai.agent.metadata` | `extract_metadata`, `generate_title`, `keywords`, `people_and_places`, `summarize`, `translate` | Text analysis |
@@ -458,10 +480,11 @@ For an app that scans documents and stores cropped images in S3:
 
 ```bash
 # Required
-OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=...
 MISTRAL_API_KEY=...
 
-# Optional (if using other platforms)
+# Optional (if using other platforms / fallbacks)
+# OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=...
 ```
 

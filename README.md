@@ -205,6 +205,19 @@ All implement `ResultStoreInterface`. Write your own to store results anywhere (
 
 Think of `symfony/ai-bundle` as the engine and `SurvosAiPipelineBundle` as the transmission — it controls which tasks fire, in which order, what each task receives, and where the results go.
 
+### Provider strategy (Gemini first)
+
+The bundle does not hard-code OpenAI for most tasks. If your `ai.agent.*` services point to Google models, the same tasks run on Gemini without PHP changes.
+
+Recommended baseline for large collections:
+- `classify` / `description`: `gemini-2.0-flash-lite` (lowest cost)
+- `metadata`: `gemini-2.5-flash` (higher quality structured output)
+- `ocr_mistral`: keep direct Mistral OCR for difficult scans and layout blocks
+
+Escalation path for hard cases:
+- Anthropic `claude-haiku-4-5-20251001` for strong historical-archive summaries
+- OpenAI batch (`gpt-4.1-mini`, `gpt-4o-mini`, `gpt-4o`) when you want async throughput or top-end vision quality
+
 ---
 
 ## Commands
@@ -521,19 +534,19 @@ $title = $entity->getAiResult('generate_title')['title'];
 | Task | Agent | Model | Input | Key outputs |
 |---|---|---|---|---|
 | `ocr_mistral` | _(direct HTTP)_ | mistral-ocr-latest | `image_url` | `text`, `pages[]`, `layout_blocks[]`, `image_blocks[]` |
-| `ocr` | `ai.agent.ocr` | gpt-4o | `image_url` | `text`, `blocks[]`, `language` |
-| `classify` | `ai.agent.classify` | gpt-4o-mini | `image_url` | `type`, `subtype`, `confidence` |
-| `basic_description` | `ai.agent.mistral_vision` | gpt-4o | `image_url` | `description`, `physicalAttributes[]` |
-| `context_description` | `ai.agent.mistral_vision` | gpt-4o | `image_url` + prior | `description` |
-| `extract_metadata` | `ai.agent.metadata` | gpt-4o-mini | `image_url` or prior OCR | `dateRange`, `people[]`, `places[]` |
-| `generate_title` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `title`, `alternativeTitles[]` |
-| `keywords` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `keywords[]`, `safety` |
-| `people_and_places` | `ai.agent.metadata` | gpt-4o-mini | prior OCR | `people[]`, `places[]`, `organisations[]` |
-| `summarize` | `ai.agent.metadata` | gpt-4o-mini | prior OCR / description | `summary`, `language` |
-| `transcribe_handwriting` | `ai.agent.mistral_vision` | gpt-4o | `image_url` | `text`, `blocks[]`, `confidence` |
-| `annotate_handwriting` | `ai.agent.mistral_vision` | gpt-4o | prior `ocr_mistral` | `annotated_text`, `pages[]` |
-| `translate` | `ai.agent.metadata` | gpt-4o-mini | prior OCR | `translation`, `sourceLanguage` |
-| `layout` | `ai.agent.metadata` | gpt-4o-mini | prior `ocr_mistral` | `blocks[]` with types/positions |
+| `ocr` | `ai.agent.ocr` | configured in `ai.yaml` | `image_url` | `text`, `blocks[]`, `language` |
+| `classify` | `ai.agent.classify` | configured in `ai.yaml` | `image_url` | `type`, `subtype`, `confidence` |
+| `basic_description` | `ai.agent.mistral_vision` | configured in `ai.yaml` | `image_url` | `description`, `physicalAttributes[]` |
+| `context_description` | `ai.agent.mistral_vision` | configured in `ai.yaml` | `image_url` + prior | `description` |
+| `extract_metadata` | `ai.agent.metadata` | configured in `ai.yaml` | `image_url` or prior OCR | `dateRange`, `people[]`, `places[]` |
+| `generate_title` | `ai.agent.metadata` | configured in `ai.yaml` | prior OCR / description | `title`, `alternativeTitles[]` |
+| `keywords` | `ai.agent.metadata` | configured in `ai.yaml` | prior OCR / description | `keywords[]`, `safety` |
+| `people_and_places` | `ai.agent.metadata` | configured in `ai.yaml` | prior OCR | `people[]`, `places[]`, `organisations[]` |
+| `summarize` | `ai.agent.metadata` | configured in `ai.yaml` | prior OCR / description | `summary`, `language` |
+| `transcribe_handwriting` | `ai.agent.mistral_vision` | configured in `ai.yaml` | `image_url` | `text`, `blocks[]`, `confidence` |
+| `annotate_handwriting` | `ai.agent.mistral_vision` | configured in `ai.yaml` | prior `ocr_mistral` | `annotated_text`, `pages[]` |
+| `translate` | `ai.agent.metadata` | configured in `ai.yaml` | prior OCR | `translation`, `sourceLanguage` |
+| `layout` | `ai.agent.metadata` | configured in `ai.yaml` | prior `ocr_mistral` | `blocks[]` with types/positions |
 
 ### Pipeline presets (common combinations)
 
