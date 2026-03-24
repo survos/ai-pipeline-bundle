@@ -9,14 +9,19 @@
         "main": "src/controllers/pipeline_actions_controller.js",
         "webpackMode": "eager",
         "fetch": "lazy",
-        "enabled": true
+        "enabled": true,
+        "autoimport": {
+        }
       }
+    },
+    "importmap": {
+      "@hotwired/stimulus": "^3.2.2"
     }
   },
-  "importmap": {
+  "peerDependencies": {
     "@hotwired/stimulus": "^3.2.2"
   },
-  "peerDependencies": {
+  "devDependencies": {
     "@hotwired/stimulus": "^3.2.2"
   }
 }

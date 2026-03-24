@@ -3,17 +3,17 @@
     "description": "Symfony bundle for resumable, ordered AI task pipelines — OCR, classify, describe, extract, summarize, and more, out of the box.",
     "type": "symfony-bundle",
     "license": "MIT",
-    "keywords": ["symfony", "ai", "pipeline", "ocr", "vision", "llm", "openai", "mistral", "ux"],
+    "keywords": ["symfony", "symfony-ux", "ai", "pipeline", "ocr", "vision", "llm", "openai", "mistral", "ux"],
     "autoload": {
         "psr-4": {
             "Survos\\AiPipelineBundle\\": "src/"
         }
     },
     "require": {
-        "php": ">=8.2",
-        "symfony/framework-bundle": "^7.3|^8.0",
-        "symfony/http-client": "^7.3|^8.0",
-        "symfony/twig-bundle": "^7.3|^8.0",
+        "php": "^8.4",
+        "symfony/framework-bundle": "^8.0",
+        "symfony/http-client": "^8.0",
+        "symfony/twig-bundle": "^8.0",
         "twig/twig": "^3.0",
         "symfony/ai-bundle": "*",
         "symfony/ai-agent": "*",
@@ -26,7 +26,7 @@
     },
     "extra": {
         "symfony": {
-            "require": "^7.3|^8.0"
+            "require": "^8.0"
         }
     }
 }

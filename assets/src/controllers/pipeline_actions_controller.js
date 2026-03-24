@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { path as fosPath } from '@survos/js-twig/generated/fos_routes.js';
 
 /**
  * pipeline-actions controller
@@ -105,18 +106,15 @@ export default class extends Controller {
 
     _buildUrl(routeName, extraParams) {
         if (!routeName) return null
-        // Use Symfony's Routing component exposed via FOSJsRoutingBundle / expose=true
-        if (typeof Routing !== 'undefined') {
-            try {
-                return Routing.generate(routeName, { ...this.routeParamsValue, ...extraParams })
-            } catch (e) {
-                console.warn(`[pipeline-actions] Routing.generate failed for "${routeName}":`, e.message)
-            }
+        try {
+            return fosPath(routeName, { ...this.routeParamsValue, ...extraParams })
+        } catch (e) {
+            console.warn(`[pipeline-actions] fosPath failed for "${routeName}":`, e.message)
         }
 
         console.error(
             `[pipeline-actions] Cannot build URL for route "${routeName}". ` +
-            `Add options: ['expose' => true] to the route so FOSJsRoutingBundle can generate it.`
+            `Add options: ['expose' => true] to the route so it gets exported.`
         )
         return null
     }

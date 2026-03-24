@@ -124,6 +124,8 @@ class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInt
                 ->setAutowired(true)
                 ->setAutoconfigured(true)
                 ->setPublic(true);
+        } else {
+            throw new \RuntimeException('Cannot find Symfony UX TwigComponent');
         }
 
         foreach (self::DEFAULT_TASKS as $taskName => $taskClass) {
