@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Survos\AiPipelineBundle;
 
-use Survos\CoreBundle\HasAssetMapperInterface;
 use Survos\CoreBundle\Traits\HasAssetMapperTrait;
 use Survos\AiPipelineBundle\Command\AiPipelineRunCommand;
 use Survos\AiPipelineBundle\Command\AiPipelineTasksCommand;
@@ -34,9 +33,11 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInterface
+class SurvosAiPipelineBundle extends AbstractBundle
 {
     use HasAssetMapperTrait;
+
+    public const ASSET_NAMESPACE = '@survos/ai-pipeline';
 
     /**
      * All built-in task classes, keyed by their task name.
@@ -195,12 +196,5 @@ class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInt
             ->addTag('ai_pipeline.task');
 
         $container->addCompilerPass(new AiTaskRegistryPass());
-    }
-
-    public function getPaths(): array
-    {
-        $dir = realpath(__DIR__ . '/../assets/');
-        assert(file_exists($dir), 'assets path must exist: ' . __DIR__);
-        return [$dir => '@survos/ai-pipeline-bundle'];
     }
 }
