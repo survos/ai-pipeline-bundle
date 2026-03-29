@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Survos\AiPipelineBundle;
 
+use Survos\CoreBundle\HasAssetMapperInterface;
 use Survos\CoreBundle\Traits\HasAssetMapperTrait;
 use Survos\AiPipelineBundle\Command\AiPipelineRunCommand;
 use Survos\AiPipelineBundle\Command\AiPipelineTasksCommand;
@@ -33,7 +34,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-class SurvosAiPipelineBundle extends AbstractBundle
+class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInterface
 {
     use HasAssetMapperTrait;
 
