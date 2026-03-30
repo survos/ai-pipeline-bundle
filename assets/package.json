@@ -1,5 +1,5 @@
 {
-  "name": "@survos/ai-pipeline-bundle",
+  "name": "@survos/ai-pipeline",
   "description": "Stimulus controllers for AI pipeline task UI",
   "license": "MIT",
   "version": "1.0.0",
@@ -10,8 +10,7 @@
         "webpackMode": "eager",
         "fetch": "lazy",
         "enabled": true,
-        "autoimport": {
-        }
+        "autoimport": {}
       }
     },
     "importmap": {

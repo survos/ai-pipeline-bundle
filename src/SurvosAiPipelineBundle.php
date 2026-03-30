@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Survos\AiPipelineBundle;
 
-use Survos\CoreBundle\HasAssetMapperInterface;
-use Survos\CoreBundle\Traits\HasAssetMapperTrait;
+use Survos\CoreBundle\Bundle\AssetMapperBundle;
 use Survos\AiPipelineBundle\Command\AiPipelineRunCommand;
 use Survos\AiPipelineBundle\Command\AiPipelineTasksCommand;
 use Survos\AiPipelineBundle\DependencyInjection\Compiler\AiTaskRegistryPass;
@@ -31,14 +30,12 @@ use Survos\AiPipelineBundle\Twig\Components\PipelineActions;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInterface
+class SurvosAiPipelineBundle extends AssetMapperBundle
 {
-    use HasAssetMapperTrait;
-
-    public const ASSET_NAMESPACE = '@survos/ai-pipeline';
+    public const ASSET_PACKAGE = 'ai-pipeline';
 
     /**
      * All built-in task classes, keyed by their task name.
@@ -171,13 +168,6 @@ class SurvosAiPipelineBundle extends AbstractBundle implements HasAssetMapperInt
             }
         } catch (\Throwable) {}
         return null;
-    }
-
-    // ── Template path ─────────────────────────────────────────────────────────
-
-    public function getPath(): string
-    {
-        return dirname(__DIR__);
     }
 
     // ── Compiler pass + autoconfiguration ────────────────────────────────────
