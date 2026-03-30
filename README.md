@@ -2,6 +2,8 @@
 
 A Symfony bundle for running **ordered, stateful AI task pipelines** against any subject — image URLs, text blobs, child-entity results, scraped HTML, song lyrics, or anything else.
 
+@todo: read https://medium.com/aimonks/supercharge-your-document-processing-with-modern-ocr-a-practical-guide-e80f0ff5629a
+
 ## Why this exists
 
 `symfony/ai-bundle` gives you agents, platforms, and tool calling. What it does not give you is a **pipeline**: a sequence of dependent tasks where each step can consume the outputs of previous steps, skip gracefully when inputs are missing, and resume from a checkpoint when re-run.
