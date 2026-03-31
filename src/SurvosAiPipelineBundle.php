@@ -5,6 +5,7 @@ namespace Survos\AiPipelineBundle;
 
 use Survos\CoreBundle\Bundle\AssetMapperBundle;
 use Survos\AiPipelineBundle\Command\AiPipelineRunCommand;
+use Survos\AiPipelineBundle\Command\AiImageCommand;
 use Survos\AiPipelineBundle\Command\AiPipelineTasksCommand;
 use Survos\AiPipelineBundle\DependencyInjection\Compiler\AiTaskRegistryPass;
 use Survos\AiPipelineBundle\Task\AiTaskInterface;
@@ -16,6 +17,7 @@ use Survos\AiPipelineBundle\Task\ContextDescriptionTask;
 use Survos\AiPipelineBundle\Task\ExtractMetadataTask;
 use Survos\AiPipelineBundle\Task\GenerateTitleTask;
 use Survos\AiPipelineBundle\Task\KeywordsTask;
+use Survos\AiPipelineBundle\Task\ImageAnalysisTask;
 use Survos\AiPipelineBundle\Task\LayoutTask;
 use Survos\AiPipelineBundle\Task\OcrMistralTask;
 use Survos\AiPipelineBundle\Task\OcrTask;
@@ -58,6 +60,7 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
         'translate'              => TranslateTask::class,
         // Single-pass thumbnail enrichment — replaces running 5 tasks separately (~80% cheaper)
         'enrich_from_thumbnail'  => EnrichFromThumbnailTask::class,
+        'image_analysis'         => ImageAnalysisTask::class,
         'extract_census'         => CensusExtractionTask::class,
     ];
 
@@ -111,6 +114,9 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
 
         $services->set(AiPipelineRunCommand::class)
             ->arg('$defaultStoreDir', '%survos_ai_pipeline.store_dir%')
+            ->tag('console.command');
+
+        $services->set(AiImageCommand::class)
             ->tag('console.command');
 
         // ── Register built-in tasks ───────────────────────────────────────────

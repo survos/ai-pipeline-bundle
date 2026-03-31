@@ -47,6 +47,15 @@ ai:
                 text: 'You are an expert document classifier. Return structured JSON only.'
             tools: false
 
+        # ── Image analysis / routing ───────────────────────────────────────────
+        # Used by: ImageAnalysisTask
+        analysis:
+            platform: 'ai.platform.mistral'
+            model: 'mistral-small-latest'
+            prompt:
+                text: 'You are a museum image analyst. Return structured JSON only.'
+            tools: false
+
         # ── Description ────────────────────────────────────────────────────────
         # Used by: BasicDescriptionTask, ContextDescriptionTask, KeywordsTask
         # Keep this lightweight for large batches.
