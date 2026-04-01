@@ -13,10 +13,10 @@ use Twig\Environment as TwigEnvironment;
 final class ImageAnalysisTask extends AbstractVisionTask
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.analysis')]
-        AgentInterface $agent,
         TwigEnvironment $twig,
         HttpClientInterface $httpClient,
+//        #[Autowire(service: 'ai.agent.analysis')]
+        ?AgentInterface $agent=null,
     ) {
         parent::__construct($agent, $twig, $httpClient);
     }
