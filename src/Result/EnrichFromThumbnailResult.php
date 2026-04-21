@@ -90,6 +90,18 @@ final class EnrichFromThumbnailResult implements \JsonSerializable
          */
         public readonly bool    $hasText          = false,
 
+        /** Machine-printed / typed text is present (routes to Tesseract / cheap OCR). */
+        public readonly bool    $typedText        = false,
+
+        /** Handwritten text is present (routes to an HTR pipeline). */
+        public readonly bool    $handwrittenText  = false,
+
+        /** The image shows a pre-printed form layout — blank or filled. */
+        public readonly bool    $isForm           = false,
+
+        /** A form with handwritten entries in blank fields — routes to a form-aware pipeline. */
+        public readonly bool    $isFilledForm     = false,
+
         /**
          * Information-dense summary ≤350 characters.
          * Combines image observations WITH existing known metadata.
@@ -137,7 +149,11 @@ final class EnrichFromThumbnailResult implements \JsonSerializable
             'date_hint'               => $this->dateHint,
             'date_confidence'         => $this->dateHint ? $this->dateConfidence : null,
             'speculations'            => $this->speculations ?: null,
-            'has_text'                => $this->hasText  ?: null,
+            'has_text'                => $this->hasText         ?: null,
+            'typed_text'              => $this->typedText       ?: null,
+            'handwritten_text'        => $this->handwrittenText ?: null,
+            'is_form'                 => $this->isForm          ?: null,
+            'is_filled_form'          => $this->isFilledForm    ?: null,
             'dense_summary'           => $this->denseSummary,
             'confidence'              => $this->confidence < 1.0 ? $this->confidence : null,
         ], static fn($v) => $v !== null && $v !== [] && $v !== false);

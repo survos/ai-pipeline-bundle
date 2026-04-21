@@ -11,17 +11,12 @@ use Survos\AiPipelineBundle\DependencyInjection\Compiler\AiTaskRegistryPass;
 use Survos\AiPipelineBundle\Task\AiTaskInterface;
 use Survos\AiPipelineBundle\Task\AiTaskRegistry;
 use Survos\AiPipelineBundle\Task\AiPipelineRunner;
-use Survos\AiPipelineBundle\Task\BasicDescriptionTask;
-use Survos\AiPipelineBundle\Task\ClassifyTask;
 use Survos\AiPipelineBundle\Task\ContextDescriptionTask;
 use Survos\AiPipelineBundle\Task\ExtractMetadataTask;
 use Survos\AiPipelineBundle\Task\GenerateTitleTask;
-use Survos\AiPipelineBundle\Task\KeywordsTask;
-use Survos\AiPipelineBundle\Task\ImageAnalysisTask;
 use Survos\AiPipelineBundle\Task\LayoutTask;
 use Survos\AiPipelineBundle\Task\OcrMistralTask;
 use Survos\AiPipelineBundle\Task\OcrTask;
-use Survos\AiPipelineBundle\Task\PeopleAndPlacesTask;
 use Survos\AiPipelineBundle\Task\SummarizeTask;
 use Survos\AiPipelineBundle\Task\TranscribeHandwritingTask;
 use Survos\AiPipelineBundle\Task\AnnotateHandwritingTask;
@@ -44,24 +39,24 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
      * Used to register defaults and to support the disabled_tasks config.
      */
     public const DEFAULT_TASKS = [
-        'basic_description'      => BasicDescriptionTask::class,
-        'classify'               => ClassifyTask::class,
-        'context_description'    => ContextDescriptionTask::class,
-        'extract_metadata'       => ExtractMetadataTask::class,
-        'generate_title'         => GenerateTitleTask::class,
-        'keywords'               => KeywordsTask::class,
-        'layout'                 => LayoutTask::class,
+        // ENRICH — the one low-res vision call per image.
+        'enrich_from_thumbnail'  => EnrichFromThumbnailTask::class,
+
+        // TRANSCRIBE — routed high-res passes (one call per image, picked by
+        // text-type flags emitted during enrich).
         'ocr'                    => OcrTask::class,
         'ocr_mistral'            => OcrMistralTask::class,
-        'people_and_places'      => PeopleAndPlacesTask::class,
-        'summarize'              => SummarizeTask::class,
         'transcribe_handwriting' => TranscribeHandwritingTask::class,
         'annotate_handwriting'   => AnnotateHandwritingTask::class,
-        'translate'              => TranslateTask::class,
-        // Single-pass thumbnail enrichment — replaces running 5 tasks separately (~80% cheaper)
-        'enrich_from_thumbnail'  => EnrichFromThumbnailTask::class,
-        'image_analysis'         => ImageAnalysisTask::class,
+        'extract_metadata'       => ExtractMetadataTask::class,
         'extract_census'         => CensusExtractionTask::class,
+        'layout'                 => LayoutTask::class,
+
+        // ANALYZE — text-only passes (read existing claims, no image tokens).
+        'context_description'    => ContextDescriptionTask::class,
+        'generate_title'         => GenerateTitleTask::class,
+        'summarize'              => SummarizeTask::class,
+        'translate'              => TranslateTask::class,
     ];
 
     // ── Configuration schema ──────────────────────────────────────────────────

@@ -1,11 +1,22 @@
+{% if context.ocr_text is defined and context.ocr_text %}
+Tesseract-extracted text from the full-res scan (use this as ground truth for readable text — do NOT re-transcribe from the thumbnail):
+---
+{{ context.ocr_text }}
+---
+
+{% endif %}
 {% if context %}
-Existing metadata (do NOT repeat these in your response — only fill what is null/missing):
+Existing metadata and operator hints — treat these as CONTEXT, not gospel:
 {% for key, value in context %}
-{% if value is not null and value != '' and value != [] %}
+{% if key != 'ocr_text' and value is not null and value != '' and value != [] %}
 - {{ key|replace({'dcterms:': '', '_': ' '})|title }}: {% if value is iterable %}{{ value|join(', ') }}{% else %}{{ value }}{% endif %}
 
 {% endif %}
 {% endfor %}
 
 {% endif %}
-Analyse the image and fill in missing metadata fields. Generate the dense_summary combining both the image and the known metadata above.
+Analyse the image. Fill every field you can — the thumbnail was already paid for; additional output fields are almost free.
+
+If any claim was informed by the context above (OCR text, operator voice note, existing title, known date, content_type hint), cite that source in the relevant basis field so the cataloguer can trace it. If you disagree with something in the context, say so in basis rather than silently overriding it.
+
+Return the dense_summary combining your image observations with the known metadata.
