@@ -23,6 +23,8 @@ use Survos\AiPipelineBundle\Task\AnnotateHandwritingTask;
 use Survos\AiPipelineBundle\Task\TranslateTask;
 use Survos\AiPipelineBundle\Task\CensusExtractionTask;
 use Survos\AiPipelineBundle\Task\EnrichFromThumbnailTask;
+use Survos\AiPipelineBundle\Menu\AiPipelineMenuSubscriber;
+use Survos\AiPipelineBundle\MessageHandler\RunAiTaskHandler;
 use Survos\AiPipelineBundle\Twig\Components\PipelineActions;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -103,6 +105,20 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
         $services->set(AiPipelineRunner::class)
             ->public();
 
+        if (class_exists(\Survos\TablerBundle\Event\MenuEvent::class)) {
+            $services->set(AiPipelineMenuSubscriber::class)
+                ->autowire()
+                ->autoconfigure();
+        }
+
+        // Messenger handler (only when Messenger is available)
+        if (class_exists(\Symfony\Component\Messenger\MessageBusInterface::class)) {
+            $services->set(RunAiTaskHandler::class)
+                ->autowire()
+                ->autoconfigure()
+                ->tag('messenger.message_handler');
+        }
+
         // Commands
         $services->set(AiPipelineTasksCommand::class)
             ->tag('console.command');
@@ -181,6 +197,23 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
         if ($container->hasExtension('twig')) {
             $container->prependExtensionConfig('twig', [
                 'paths' => [dirname(__DIR__) . '/templates' => 'SurvosAiPipeline'],
+            ]);
+        }
+
+        // Register Doctrine entity mapping
+        if ($container->hasExtension('doctrine')) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'SurvosAiPipelineBundle' => [
+                            'type'      => 'attribute',
+                            'is_bundle' => false,
+                            'dir'       => __DIR__ . '/Entity',
+                            'prefix'    => 'Survos\\AiPipelineBundle\\Entity',
+                            'alias'     => 'SurvosAiPipelineBundle',
+                        ],
+                    ],
+                ],
             ]);
         }
 
