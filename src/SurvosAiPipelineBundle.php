@@ -47,10 +47,10 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
         // TRANSCRIBE — routed high-res passes (one call per image, picked by
         // text-type flags emitted during enrich).
         'ocr'                    => OcrTask::class,
-        'ocr_mistral'            => OcrMistralTask::class,
-        'transcribe_handwriting' => TranscribeHandwritingTask::class,
+        OcrMistralTask::TASK     => OcrMistralTask::class,
+        TranscribeHandwritingTask::TASK => TranscribeHandwritingTask::class,
         'annotate_handwriting'   => AnnotateHandwritingTask::class,
-        'extract_metadata'       => ExtractMetadataTask::class,
+        ExtractMetadataTask::TASK => ExtractMetadataTask::class,
         'extract_census'         => CensusExtractionTask::class,
         'layout'                 => LayoutTask::class,
 

@@ -11,6 +11,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class TranscribeHandwritingTask extends AbstractVisionTask
 {
+    use TaskNameTrait;
+
+    public const TASK = 'transcribe_handwriting';
+
     public function __construct(
         #[Autowire(service: 'ai.agent.mistral_vision')]
         AgentInterface $agent,
@@ -19,8 +23,6 @@ final class TranscribeHandwritingTask extends AbstractVisionTask
     ) {
         parent::__construct($agent, $twig, $httpClient);
     }
-
-    public function getTask(): string { return 'transcribe_handwriting'; }
 
     public function supports(array $inputs, array $context = []): bool
     {

@@ -31,6 +31,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class OcrMistralTask implements AiTaskInterface
 {
+    use TaskNameTrait;
+
+    public const TASK = 'ocr_mistral';
+
     /** JSON schema sent as document_annotation_format to get per-block layout */
     private const LAYOUT_SCHEMA = [
         'type'        => 'json_schema',
@@ -74,11 +78,6 @@ final class OcrMistralTask implements AiTaskInterface
         #[Autowire('%env(MISTRAL_API_KEY)%')]
         private readonly string $mistralApiKey,
     ) {
-    }
-
-    public function getTask(): string
-    {
-        return 'ocr_mistral';
     }
 
     public function supports(array $inputs, array $context = []): bool

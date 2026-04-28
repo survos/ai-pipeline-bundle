@@ -11,6 +11,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class ExtractMetadataTask extends AbstractVisionTask
 {
+    use TaskNameTrait;
+
+    public const TASK = 'extract_metadata';
+
     public function __construct(
         #[Autowire(service: 'ai.agent.metadata')]
         AgentInterface $agent,
@@ -19,8 +23,6 @@ final class ExtractMetadataTask extends AbstractVisionTask
     ) {
         parent::__construct($agent, $twig, $httpClient);
     }
-
-    public function getTask(): string { return 'extract_metadata'; }
 
     protected function responseFormatClass(): ?string { return MetadataResult::class; }
 }
