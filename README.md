@@ -228,9 +228,11 @@ Escalation path for hard cases:
 
 Lists all tasks registered in the compiled container. Zero service instantiation — reads the compile-time map.
 
+```bash
+bin/console ai:pipeline:tasks
 ```
-$ bin/console ai:pipeline:tasks
 
+```
 AI Pipeline Task Registry  (compiled at container build time)
 =============================================================
 
