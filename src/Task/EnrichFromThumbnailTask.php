@@ -44,7 +44,7 @@ use Twig\Environment as TwigEnvironment;
 final class EnrichFromThumbnailTask extends AbstractVisionTask
 {
     public function __construct(
-        #[Autowire(service: 'ai.agent.metadata')] AgentInterface $agent,
+        #[Autowire(service: 'ai.agent.thumbnail_enrich')] AgentInterface $agent,
         TwigEnvironment $twig,
         HttpClientInterface $httpClient,
     ) {

@@ -116,6 +116,28 @@ final class EnrichFromThumbnailResult implements \JsonSerializable
 
         /** Overall confidence in the extraction (0.0–1.0) */
         public readonly float   $confidence       = 1.0,
+
+        /**
+         * True when the thumbnail + supplied OCR/context are enough and no
+         * further image pixels are needed before text-only analysis.
+         */
+        public readonly ?bool   $pixelsDone       = null,
+
+        /** Why pixelsDone was chosen. Required when pixelsDone is false. */
+        public readonly ?string $pixelDecisionReason = null,
+
+        /**
+         * The single best high-res extraction goal when pixelsDone is false.
+         * Examples: read_handwriting, extract_form_fields, read_dense_print,
+         * inspect_detail, none.
+         */
+        public readonly ?string $highResGoal      = null,
+
+        /** @var string[] Specific visual regions or evidence to revisit at high resolution. */
+        public readonly array   $highResTargets   = [],
+
+        /** What important evidence would be lost if the high-res pass is skipped. */
+        public readonly ?string $riskIfSkipped    = null,
     ) {}
 
     public function jsonSerialize(): array
@@ -131,7 +153,7 @@ final class EnrichFromThumbnailResult implements \JsonSerializable
             if ($term) $byConf[$conf][] = $term;
         }
 
-        return array_filter([
+        $out = [
             'title'                   => $this->title,
             'title_confidence'        => $this->title && $this->titleConfidence !== 'high'
                                             ? $this->titleConfidence : null,
@@ -156,7 +178,18 @@ final class EnrichFromThumbnailResult implements \JsonSerializable
             'is_filled_form'          => $this->isFilledForm    ?: null,
             'dense_summary'           => $this->denseSummary,
             'confidence'              => $this->confidence < 1.0 ? $this->confidence : null,
-        ], static fn($v) => $v !== null && $v !== [] && $v !== false);
+            'pixels_done'             => $this->pixelsDone,
+            'pixel_decision_reason'   => $this->pixelDecisionReason,
+            'high_res_goal'           => $this->highResGoal,
+            'high_res_targets'        => $this->highResTargets ?: null,
+            'risk_if_skipped'         => $this->riskIfSkipped,
+        ];
+
+        return array_filter(
+            $out,
+            static fn(mixed $v, string $k): bool => $v !== null && $v !== [] && ($v !== false || $k === 'pixels_done'),
+            ARRAY_FILTER_USE_BOTH,
+        );
     }
 
     public function needsOcr(): bool { return $this->hasText; }

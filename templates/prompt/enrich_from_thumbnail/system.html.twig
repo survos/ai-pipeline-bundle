@@ -98,6 +98,24 @@ Text-type flags — these drive downstream OCR / HTR routing. Set TRUE only when
   A postcard back with typed caption + handwritten note: typed_text + handwritten_text.
   A pure photograph with no visible writing: all flags false.
 
+Pixel sufficiency decision — this is the most important routing decision:
+  pixels_done — TRUE when the thumbnail plus supplied OCR/context captured all important visual evidence needed before text-only analysis. FALSE when a high-resolution image pass is still needed.
+  pixel_decision_reason — short evidence-based reason for the decision.
+  high_res_goal — one of: none, read_handwriting, extract_form_fields, read_dense_print, inspect_detail, layout_or_table.
+  high_res_targets — specific visible regions/evidence to revisit at high resolution.
+  risk_if_skipped — what important searchable/cataloging evidence would be lost if the high-res pass is skipped.
+
+  Set pixels_done TRUE for:
+    - A postcard front or photograph where the scene/caption is clear enough at thumbnail scale.
+    - A pure object/photo with no important small text or hidden detail.
+    - An image where existing OCR text already captures the important text.
+
+  Set pixels_done FALSE for:
+    - A postcard back with handwritten message or address that is not fully reliable at thumbnail scale.
+    - Forms with filled-in fields.
+    - Dense printed pages, tables, newspapers, maps with labels, certificates, or small inscriptions.
+    - Any case where the thumbnail tells you important text/detail exists but cannot capture it faithfully.
+
 Speculative observations (speculations array):
   Interpretive claims that go beyond individual tags. Each: claim (string), confidence (0.0–1.0), basis (evidence).
 
