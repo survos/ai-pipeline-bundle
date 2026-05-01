@@ -231,9 +231,12 @@ final class AiPipelineRunCommand extends Command
             $summary = match (true) {
                 isset($result['text'])        => mb_substr((string) $result['text'], 0, 120) . '…',
                 isset($result['description']) => mb_substr((string) $result['description'], 0, 120) . '…',
-                isset($result['title'])       => $result['title'],
+                isset($result['title'])       => $this->stringifySummaryValue($result['title']),
                 isset($result['type'])        => sprintf('%s (%.0f%%)', $result['type'], ($result['confidence'] ?? 0) * 100),
-                isset($result['keywords'])    => implode(', ', array_slice((array) $result['keywords'], 0, 8)),
+                isset($result['keywords'])    => implode(', ', array_map(
+                    fn(mixed $keyword): string => $this->stringifySummaryValue($keyword),
+                    array_slice((array) $result['keywords'], 0, 8),
+                )),
                 isset($result['summary'])     => mb_substr((string) $result['summary'], 0, 120) . '…',
                 default                       => json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             };
@@ -244,5 +247,24 @@ final class AiPipelineRunCommand extends Command
             $io->newLine();
             $io->writeln(json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         }
+    }
+
+    private function stringifySummaryValue(mixed $value): string
+    {
+        if (is_scalar($value) || $value === null) {
+            return (string) $value;
+        }
+
+        if (is_array($value)) {
+            foreach (['term', 'title', 'type', 'text', 'description', 'name', 'value'] as $preferredKey) {
+                if (is_scalar($value[$preferredKey] ?? null)) {
+                    return (string) $value[$preferredKey];
+                }
+            }
+
+            return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[array]';
+        }
+
+        return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[value]';
     }
 }

@@ -156,7 +156,7 @@ final class AiPipelineRunner
         $out = [];
         foreach ($prior as $taskName => $result) {
             unset($result['raw_response'], $result['blocks']);
-            if (isset($result['text']) && strlen($result['text']) > 8000) {
+            if (isset($result['text']) && is_string($result['text']) && strlen($result['text']) > 8000) {
                 $result['text'] = mb_substr($result['text'], 0, 8000) . "\n[… truncated]";
             }
             $out[$taskName] = $result;
