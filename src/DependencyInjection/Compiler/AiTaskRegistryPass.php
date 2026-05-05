@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Survos\AiPipelineBundle\DependencyInjection\Compiler;
 
 use Survos\AiPipelineBundle\Task\AiTaskRegistry;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -29,6 +30,12 @@ final class AiTaskRegistryPass implements CompilerPassInterface
             $class      = $definition->getClass() ?? $serviceId;
 
             if (!class_exists($class)) {
+                continue;
+            }
+
+            $agentServiceId = $this->resolveAgentServiceId($class);
+            if ($agentServiceId !== null && !$container->has($agentServiceId)) {
+                $container->removeDefinition($serviceId);
                 continue;
             }
 
@@ -76,6 +83,28 @@ final class AiTaskRegistryPass implements CompilerPassInterface
             /** @var \Survos\AiPipelineBundle\Task\AiTaskInterface $instance */
             $instance = $rc->newInstanceWithoutConstructor();
             return $instance->getTask();
+        } catch (\Throwable) {
+        }
+
+        return null;
+    }
+
+    /**
+     * Read the #[Autowire(service: 'ai.agent.*')] attribute from a task constructor.
+     */
+    private function resolveAgentServiceId(string $class): ?string
+    {
+        try {
+            $rc = new \ReflectionClass($class);
+            foreach ($rc->getConstructor()?->getParameters() ?? [] as $param) {
+                foreach ($param->getAttributes(Autowire::class) as $attr) {
+                    $args = $attr->getArguments();
+                    $svc = $args['service'] ?? $args[0] ?? null;
+                    if (is_string($svc) && str_starts_with($svc, 'ai.agent.')) {
+                        return $svc;
+                    }
+                }
+            }
         } catch (\Throwable) {
         }
 

@@ -200,6 +200,12 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
             ]);
         }
 
+        if ($container->hasExtension('twig_component')) {
+            $container->prependExtensionConfig('twig_component', [
+                'anonymous_template_directory' => 'components',
+            ]);
+        }
+
         // Register Doctrine entity mapping
         if ($container->hasExtension('doctrine')) {
             $container->prependExtensionConfig('doctrine', [
