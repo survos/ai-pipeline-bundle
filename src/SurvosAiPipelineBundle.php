@@ -189,26 +189,26 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
 
     // ── Compiler pass + autoconfiguration ────────────────────────────────────
 
-    public function build(ContainerBuilder $container): void
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        parent::build($container);
+        parent::prependExtension($container, $builder);
 
         // Register template namespace @SurvosAiPipeline
-        if ($container->hasExtension('twig')) {
-            $container->prependExtensionConfig('twig', [
+        if ($builder->hasExtension('twig')) {
+            $builder->prependExtensionConfig('twig', [
                 'paths' => [dirname(__DIR__) . '/templates' => 'SurvosAiPipeline'],
             ]);
         }
 
-        if ($container->hasExtension('twig_component')) {
-            $container->prependExtensionConfig('twig_component', [
+        if ($builder->hasExtension('twig_component')) {
+            $builder->prependExtensionConfig('twig_component', [
                 'anonymous_template_directory' => 'components',
             ]);
         }
 
         // Register Doctrine entity mapping
-        if ($container->hasExtension('doctrine')) {
-            $container->prependExtensionConfig('doctrine', [
+        if ($builder->hasExtension('doctrine')) {
+            $builder->prependExtensionConfig('doctrine', [
                 'orm' => [
                     'mappings' => [
                         'SurvosAiPipelineBundle' => [
@@ -222,6 +222,11 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
                 ],
             ]);
         }
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
 
         $container->registerForAutoconfiguration(AiTaskInterface::class)
             ->addTag('ai_pipeline.task');
