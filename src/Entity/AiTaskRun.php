@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Ulid;
 #[EntityMeta(icon: 'mdi:robot-industrial-outline', group: 'AI')]
 #[ApiResource(
     operations: [new GetCollection(), new Get()],
-    security: "is_granted('ROLE_ADMIN')",
+//    security: "is_granted('ROLE_ADMIN')",
     paginationItemsPerPage: 30,
     order: ['queuedAt' => 'DESC'],
 )]
