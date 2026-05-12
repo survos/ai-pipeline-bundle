@@ -7,6 +7,7 @@ use Survos\CoreBundle\Bundle\AssetMapperBundle;
 use Survos\AiPipelineBundle\Command\AiPipelineRunCommand;
 use Survos\AiPipelineBundle\Command\AiImageCommand;
 use Survos\AiPipelineBundle\Command\AiPipelineTasksCommand;
+use Survos\AiPipelineBundle\Command\ObjectNotFoundErrorCommand;
 use Survos\AiPipelineBundle\DependencyInjection\Compiler\AiTaskRegistryPass;
 use Survos\AiPipelineBundle\Task\AiTaskInterface;
 use Survos\AiPipelineBundle\Task\AiTaskRegistry;
@@ -128,6 +129,9 @@ class SurvosAiPipelineBundle extends AssetMapperBundle
             ->tag('console.command');
 
         $services->set(AiImageCommand::class)
+            ->tag('console.command');
+
+        $services->set(ObjectNotFoundErrorCommand::class)
             ->tag('console.command');
 
         // ── Register built-in tasks ───────────────────────────────────────────
