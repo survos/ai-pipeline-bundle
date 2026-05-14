@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    inferPrivatePropertyTypeFromConstructor: true
+    paths:
+        - ./src/
+
+    excludePaths:
+       analyse:
+
+    ignoreErrors:
+        - '#is used zero times and is not analysed.#'
+        # False positive: clients are not dependencies of this project.
+        -
+            message: '#.*NodeDefinition::children.*#'
+            path: ./src/*Bundle.php
